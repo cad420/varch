@@ -31,7 +31,7 @@ else()
     ${PROJECT_SOURCE_DIR}/lib/linux/stubs/x86_64/libnvcuvid.so
   )
 endif()
-vm_target_dependency(video_decompress cudafx PUBLIC)
+vm_target_dependency(video_decompress VMUtils PUBLIC)
 
 find_path(FFMPEG_INCLUDE_DIR
   NAMES ffmpeg/libavcodec/avcodec.h

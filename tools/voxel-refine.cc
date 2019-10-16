@@ -83,9 +83,10 @@ int main( int argc, char **argv )
 
 		{
 			auto opts = vol::refine::RefinerOptions{}
-						  .set_x( x )
-						  .set_y( y )
-						  .set_z( z )
+						  .set_raw_size( vol::index::Idx{}
+										   .set_x( x )
+										   .set_y( y )
+										   .set_z( z ) )
 						  .set_log_block_size( log )
 						  .set_padding( padding )
 						  .set_input( input )

@@ -41,9 +41,9 @@ VM_EXPORT
 {
 	struct Idx
 	{
-		VM_DEFINE_ATTRIBUTE( size_t, x );
-		VM_DEFINE_ATTRIBUTE( size_t, y );
-		VM_DEFINE_ATTRIBUTE( size_t, z );
+		VM_DEFINE_ATTRIBUTE( size_t, x ) = 0;
+		VM_DEFINE_ATTRIBUTE( size_t, y ) = 0;
+		VM_DEFINE_ATTRIBUTE( size_t, z ) = 0;
 
 		void write_to( Writer &writer ) const
 		{

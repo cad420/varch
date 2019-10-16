@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
 project(voxel-compression)
 
+cmake_policy(SET CMP0077 NEW)
+
 find_package(Git)
 execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive)
 # install external modules

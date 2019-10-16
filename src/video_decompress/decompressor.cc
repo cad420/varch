@@ -31,7 +31,7 @@ struct DecompressorImpl final : vm::NoCopy, vm::NoMove
 {
 	DecompressorImpl( Reader &hint ) :
 	  wrapper( &hint ),
-	  demuxer( &wrapper ),
+	  demuxer( &wrapper )
 	{
 		cuCtxGetCurrent( &ctx );
 		dec.reset( new NvDecoder(

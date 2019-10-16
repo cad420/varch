@@ -4,7 +4,9 @@
 #include <fstream>
 #include <atomic>
 #include <ciso646>
+#include <vocomp/index/index.hpp>
 #include <VMUtils/nonnull.hpp>
+#include <VMUtils/option.hpp>
 #include "internal/header.hpp"
 
 namespace vol
@@ -17,9 +19,9 @@ VM_EXPORT
 {
 	struct RefinerOptions
 	{
-		VM_DEFINE_ATTRIBUTE( size_t, x );
-		VM_DEFINE_ATTRIBUTE( size_t, y );
-		VM_DEFINE_ATTRIBUTE( size_t, z );
+		VM_DEFINE_ATTRIBUTE( index::Idx, raw_size );
+		VM_DEFINE_ATTRIBUTE( vm::Option<index::Idx>, sub_region_begin );
+		VM_DEFINE_ATTRIBUTE( vm::Option<index::Idx>, sub_region_size );
 		VM_DEFINE_ATTRIBUTE( size_t, log_block_size );
 		VM_DEFINE_ATTRIBUTE( size_t, padding );
 		VM_DEFINE_ATTRIBUTE( string, input );
@@ -28,9 +30,9 @@ VM_EXPORT
 
 	struct ConvertOptions
 	{
-		VM_DEFINE_ATTRIBUTE(std::shared_ptr<vol::Pipe>, pipe);
-		VM_DEFINE_ATTRIBUTE(size_t, suggest_mem_gb) = 128;
-		VM_DEFINE_ATTRIBUTE(size_t, frame_len) = 0;
+		VM_DEFINE_ATTRIBUTE( std::shared_ptr<vol::Pipe>, pipe );
+		VM_DEFINE_ATTRIBUTE( size_t, suggest_mem_gb ) = 128;
+		VM_DEFINE_ATTRIBUTE( size_t, frame_len ) = 0;
 	};
 
 	struct Refiner final : vm::NoCopy

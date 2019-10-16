@@ -16,7 +16,6 @@ if(VOCOMP_ENABLE_CUDA)
   # target_include_directories(vocomp PRIVATE
   #   ${CUDA_INCLUDE_DIRS}
   # )
-  vm_target_dependency(video_compress cudafx PRIVATE)
 else()
   add_library(video_compress ${VIDEO_COMPRESS_SRC})
 endif()
