@@ -54,7 +54,7 @@ struct DecompressorImpl final : vm::NoCopy, vm::NoMove
 	}
 
 private:
-	cufx::drv::ctx = 0;
+	cufx::drv::Context ctx = 0;
 	std::unique_ptr<NvDecoder> dec;
 };
 
