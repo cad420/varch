@@ -89,7 +89,7 @@ public:
     *  starting to decode any frames.
     */
     NvDecoder(CUcontext cuContext, bool bUseDeviceFrame, cudaVideoCodec eCodec, std::mutex *pMutex = NULL, bool bLowLatency = false,
-              bool bDeviceFramePitched = false, const Rect *pCropRect = NULL, const Dim *pResizeDim = NULL,
+              const Rect *pCropRect = NULL, const Dim *pResizeDim = NULL,
               int maxWidth = 0, int maxHeight = 0);
     ~NvDecoder();
 
@@ -149,11 +149,6 @@ public:
     CUVIDEOFORMAT GetVideoFormatInfo() { assert(m_nWidth); return m_videoFormat; }
 
     /**
-    *   @brief  This function is used to print information about the video stream
-    */
-    std::string GetVideoInfo() const { return m_videoInfo.str(); }
-
-    /**
     *   @brief  This function decodes a frame and returns frames that are available for display.
         The frames should be used or buffered before making subsequent calls to the Decode function again
     *   @param  pData - pointer to the data buffer that is to be decoded
@@ -165,7 +160,7 @@ public:
     *   @param  timestamp - presentation timestamp
     *   @param  stream - CUstream to be used for post-processing operations
     */
-    bool Decode(const uint8_t *pData, int nSize, uint8_t ***pppFrame, int *pnFrameReturned, uint32_t flags = 0, int64_t **ppTimestamp = NULL, int64_t timestamp = 0, CUstream stream = 0);
+    bool Decode(const uint8_t *pData, int nSize, uint8_t ***pppFrame, int *pnFrameReturned, uint32_t flags = 0, CUstream stream = 0);
 
     /**
     *   @brief  This function decodes a frame and returns the locked frame buffers
@@ -181,7 +176,7 @@ public:
     *   @param  timestamp - presentation timestamp	
     *   @param  stream - CUstream to be used for post-processing operations
     */
-    bool DecodeLockFrame(const uint8_t *pData, int nSize, uint8_t ***pppFrame, int *pnFrameReturned, uint32_t flags = 0, int64_t **ppTimestamp = NULL, int64_t timestamp = 0, CUstream stream = 0);
+    bool DecodeLockFrame(const uint8_t *pData, int nSize, uint8_t ***pppFrame, int *pnFrameReturned, uint32_t flags = 0, CUstream stream = 0);
 
     /**
     *   @brief  This function unlocks the frame buffer and makes the frame buffers available for write again
@@ -189,13 +184,6 @@ public:
     *   @param  nFrame - number of frames to be unlocked
     */
     void UnlockFrame(uint8_t **ppFrame, int nFrame);
-
-    /**
-    *   @brief  This function allow app to set decoder reconfig params
-    *   @param  pCropRect - cropping rectangle coordinates
-    *   @param  pResizeDim - width and height of resized output
-    */
-    int setReconfigParams(const Rect * pCropRect, const Dim * pResizeDim);
 
 private:
     /**
@@ -260,21 +248,15 @@ private:
     std::vector<uint8_t *> m_vpFrame; 
     // decoded frames for return
     std::vector<uint8_t *> m_vpFrameRet;
-    // timestamps of decoded frames
-    std::vector<int64_t> m_vTimestamp;
     int m_nDecodedFrame = 0, m_nDecodedFrameReturned = 0;
     int m_nDecodePicCnt = 0, m_nPicNumInDecodeOrder[32];
     bool m_bEndDecodeDone = false;
     std::mutex m_mtxVPFrame;
     int m_nFrameAlloc = 0;
     CUstream m_cuvidStream = 0;
-    bool m_bDeviceFramePitched = false;
     size_t m_nDeviceFramePitch = 0;
     Rect m_cropRect = {};
     Dim m_resizeDim = {};
 
-    std::ostringstream m_videoInfo;
     unsigned int m_nMaxWidth = 0, m_nMaxHeight = 0;
-    bool m_bReconfigExternal = false;
-    bool m_bReconfigExtPPChange = false;
 };

@@ -2,6 +2,7 @@
 
 #include <nvcodec/NvDecoder.h>
 #include <cudafx/driver/context.hpp>
+#include <cudafx/array.hpp>
 
 namespace vol
 {
@@ -23,14 +24,8 @@ struct DecompressorImpl final : vm::NoCopy, vm::NoMove
 			}() ) );
 	}
 
-	void decompress( Reader &reader, Writer &writer )
+	std::vector<uint32_t> &decode_header( Reader &reader )
 	{
-		thread_local auto packet = std::vector<char>( 1024 );
-
-		int totaldec = 0;
-		uint8_t **ppframe;
-		int nframedec;
-
 		uint32_t nframes;
 		reader.read( reinterpret_cast<char *>( &nframes ), sizeof( nframes ) );
 		thread_local std::vector<uint32_t> frame_len;
@@ -38,18 +33,42 @@ struct DecompressorImpl final : vm::NoCopy, vm::NoMove
 		reader.read( reinterpret_cast<char *>( frame_len.data() ),
 					 sizeof( uint32_t ) * nframes );
 		frame_len[ nframes ] = 0;
+		return frame_len;
+	}
 
+	char *get_packet( uint32_t len )
+	{
+		thread_local auto _ = std::vector<char>( 1024 );
+		if ( len > _.size() ) {
+			_.resize( len );
+		}
+		return _.data();
+	}
+
+	void decompress( Reader &reader, Writer &writer )
+	{
+		auto &frame_len = decode_header( reader );
 		for ( auto &len : frame_len ) {
-			if ( len > packet.size() ) {
-				packet.resize( len );
-			}
-			reader.read( packet.data(), len );
-			dec->Decode( reinterpret_cast<uint8_t *>( packet.data() ), len, &ppframe, &nframedec );
+			uint8_t **ppframe;
+			int nframedec;
+
+			auto packet = get_packet( len );
+			reader.read( packet, len );
+			dec->Decode( reinterpret_cast<uint8_t *>( packet ), len, &ppframe, &nframedec );
 
 			for ( int i = 0; i < nframedec; i++ ) {
 				writer.write( reinterpret_cast<char *>( ppframe[ i ] ), dec->GetFrameSize() );
 			}
-			totaldec += nframedec;
+		}
+	}
+
+	void decompress( Reader &reader, cufx::Array3D<char> const &dst )
+	{
+		auto &frame_len = decode_header( reader );
+		for ( auto &len : frame_len ) {
+			auto packet = get_packet( len );
+			reader.read( packet, len );
+			// dec->Decode( reinterpret_cast<uint8_t *>( packet ), len, &&ppframe, &nframedec );
 		}
 	}
 
