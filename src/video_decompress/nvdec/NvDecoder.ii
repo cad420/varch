@@ -15,7 +15,7 @@
 
 #include "nvcodec/nvcuvid.h"
 #include "nvcodec/NvCodecUtils.h"
-#include "nvcodec/NvDecoder.h"
+#include "NvDecoder.h"
 
 #define START_TIMER auto start = std::chrono::high_resolution_clock::now();
 #define STOP_TIMER( print_message ) std::cout << print_message << std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() \
@@ -203,66 +203,6 @@ int NvDecoder::HandleVideoSequence( CUVIDEOFORMAT *pVideoFormat )
 	NVDEC_API_CALL( cuvidCreateDecoder( &m_hDecoder, &videoDecodeCreateInfo ) );
 	CUDA_DRVAPI_CALL( cuCtxPopCurrent( NULL ) );
 	STOP_TIMER( "Session Initialization Time: " );
-	return nDecodeSurface;
-}
-
-int NvDecoder::ReconfigureDecoder( CUVIDEOFORMAT *pVideoFormat )
-{
-	if ( pVideoFormat->bit_depth_luma_minus8 != m_videoFormat.bit_depth_luma_minus8 || pVideoFormat->bit_depth_chroma_minus8 != m_videoFormat.bit_depth_chroma_minus8 ) {
-		NVDEC_THROW_ERROR( "Reconfigure Not supported for bit depth change", CUDA_ERROR_NOT_SUPPORTED );
-	}
-
-	if ( pVideoFormat->chroma_format != m_videoFormat.chroma_format ) {
-		NVDEC_THROW_ERROR( "Reconfigure Not supported for chroma format change", CUDA_ERROR_NOT_SUPPORTED );
-	}
-
-	bool bDecodeResChange = !( pVideoFormat->coded_width == m_videoFormat.coded_width && pVideoFormat->coded_height == m_videoFormat.coded_height );
-	bool bDisplayRectChange = !( pVideoFormat->display_area.bottom == m_videoFormat.display_area.bottom && pVideoFormat->display_area.top == m_videoFormat.display_area.top && pVideoFormat->display_area.left == m_videoFormat.display_area.left && pVideoFormat->display_area.right == m_videoFormat.display_area.right );
-
-	int nDecodeSurface = pVideoFormat->min_num_decode_surfaces;
-
-	if ( ( pVideoFormat->coded_width > m_nMaxWidth ) || ( pVideoFormat->coded_height > m_nMaxHeight ) ) {
-		// For VP9, let driver  handle the change if new width/height > maxwidth/maxheight
-		if ( m_eCodec != cudaVideoCodec_VP9 ) {
-			NVDEC_THROW_ERROR( "Reconfigure Not supported when width/height > maxwidth/maxheight", CUDA_ERROR_NOT_SUPPORTED );
-		}
-		return 1;
-	}
-
-	if ( !bDecodeResChange ) {
-		// if the coded_width/coded_height hasn't changed but display resolution has changed, then need to update width/height for
-		// correct output without cropping. Example : 1920x1080 vs 1920x1088
-		if ( bDisplayRectChange ) {
-			m_nWidth = pVideoFormat->display_area.right - pVideoFormat->display_area.left;
-			m_nLumaHeight = pVideoFormat->display_area.bottom - pVideoFormat->display_area.top;
-			m_nChromaHeight = int( m_nLumaHeight * GetChromaHeightFactor( pVideoFormat->chroma_format ) );
-			m_nNumChromaPlanes = GetChromaPlaneCount( pVideoFormat->chroma_format );
-		}
-
-		// no need for reconfigureDecoder(). Just return
-		return 1;
-	}
-
-	CUVIDRECONFIGUREDECODERINFO reconfigParams = { 0 };
-
-	reconfigParams.ulWidth = m_videoFormat.coded_width = pVideoFormat->coded_width;
-	reconfigParams.ulHeight = m_videoFormat.coded_height = pVideoFormat->coded_height;
-
-	// Dont change display rect and get scaled output from decoder. This will help display app to present apps smoothly
-	reconfigParams.display_area.bottom = m_displayRect.b;
-	reconfigParams.display_area.top = m_displayRect.t;
-	reconfigParams.display_area.left = m_displayRect.l;
-	reconfigParams.display_area.right = m_displayRect.r;
-	reconfigParams.ulTargetWidth = m_nSurfaceWidth;
-	reconfigParams.ulTargetHeight = m_nSurfaceHeight;
-	reconfigParams.ulNumDecodeSurfaces = nDecodeSurface;
-
-	START_TIMER
-	CUDA_DRVAPI_CALL( cuCtxPushCurrent( m_cuContext ) );
-	NVDEC_API_CALL( cuvidReconfigureDecoder( m_hDecoder, &reconfigParams ) );
-	CUDA_DRVAPI_CALL( cuCtxPopCurrent( NULL ) );
-	STOP_TIMER( "Session Reconfigure Time: " );
-
 	return nDecodeSurface;
 }
 

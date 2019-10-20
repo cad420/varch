@@ -2,12 +2,13 @@
 
 #include <VMUtils/nonnull.hpp>
 #include <VMUtils/concepts.hpp>
-#include "method.hpp"
-#include "../io.hpp"
+#include <VMUtils/attributes.hpp>
 #include <cudafx/stream.hpp>
 #include <cudafx/misc.hpp>
 #include <cudafx/memory.hpp>
 #include <cudafx/array.hpp>
+#include "method.hpp"
+#include "../io.hpp"
 
 namespace vol
 {
@@ -17,16 +18,19 @@ struct DecompressorImpl;
 
 VM_EXPORT
 {
+	struct DecompressorOptions
+	{
+		VM_DEFINE_ATTRIBUTE( EncodeMethod, encode );
+		VM_DEFINE_ATTRIBUTE( unsigned, io_queue_size ) = 4;
+	};	
+
 	struct Decompressor final : Pipe, vm::NoCopy
 	{
-		Decompressor( EncodeMethod encode );
+		Decompressor( DecompressorOptions const &opts = DecompressorOptions{} );
 		~Decompressor();
 
 		void decompress( Reader &reader, Writer &writer );
-		std::future<cufx::Result> decompress( Reader &reader, cufx::GlobalMemory const &swap,
-												cufx::Array3D<unsigned char> const &dst,
-												cufx::Extent const &dim,
-												cufx::Stream const &stream = cufx::Stream::null() );
+		void decompress( Reader &reader, cufx::MemoryView1D<unsigned char> const &swap );
 
 		void transfer( Reader &reader, Writer &writer ) override
 		{

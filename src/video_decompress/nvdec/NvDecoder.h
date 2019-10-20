@@ -19,7 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
-#include "nvcuvid.h"
+#include <nvcodec/nvcuvid.h>
 #include <VMUtils/with.hpp>
 
 /**
