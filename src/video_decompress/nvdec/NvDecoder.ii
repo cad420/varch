@@ -275,7 +275,6 @@ int NvDecoder::HandlePictureDecode( CUVIDPICPARAMS *pPicParams )
 		NVDEC_THROW_ERROR( "Decoder not initialized.", CUDA_ERROR_NOT_INITIALIZED );
 		return false;
 	}
-	m_nPicNumInDecodeOrder[ pPicParams->CurrPicIdx ] = m_nDecodePicCnt++;
 	NVDEC_API_CALL( cuvidDecodePicture( m_hDecoder, pPicParams ) );
 	return 1;
 }
@@ -301,64 +300,59 @@ int NvDecoder::HandlePictureDisplay( CUVIDPARSERDISPINFO *pDispInfo )
 	memset( &DecodeStatus, 0, sizeof( DecodeStatus ) );
 	CUresult result = cuvidGetDecodeStatus( m_hDecoder, pDispInfo->picture_index, &DecodeStatus );
 	if ( result == CUDA_SUCCESS && ( DecodeStatus.decodeStatus == cuvidDecodeStatus_Error || DecodeStatus.decodeStatus == cuvidDecodeStatus_Error_Concealed ) ) {
-		printf( "Decode Error occurred for picture %d\n", m_nPicNumInDecodeOrder[ pDispInfo->picture_index ] );
+		printf( "Decode Error occurred\n" );
 	}
 
-	uint8_t *pDecodedFrame = nullptr;
-	{
-		std::lock_guard<std::mutex> lock( m_mtxVPFrame );
-		if ( (unsigned)++m_nDecodedFrame > m_vpFrame.size() ) {
-			// Not enough frames in stock
-			m_nFrameAlloc++;
-			uint8_t *pFrame = NULL;
-			if ( m_bUseDeviceFrame ) {
-				CUDA_DRVAPI_CALL( cuCtxPushCurrent( m_cuContext ) );
-				CUDA_DRVAPI_CALL( cuMemAlloc( (CUdeviceptr *)&pFrame, GetFrameSize() ) );
-				CUDA_DRVAPI_CALL( cuCtxPopCurrent( NULL ) );
-			} else {
+	if ( on_picture_display.has() ) {
+		( *on_picture_display )( dpSrcFrame, nSrcPitch );
+	} else {
+		uint8_t *pDecodedFrame = nullptr;
+		{
+			std::lock_guard<std::mutex> lock( m_mtxVPFrame );
+			if ( (unsigned)++m_nDecodedFrame > m_vpFrame.size() ) {
+				// Not enough frames in stock
+				uint8_t *pFrame = NULL;
 				pFrame = new uint8_t[ GetFrameSize() ];
+				m_vpFrame.push_back( pFrame );
 			}
-			m_vpFrame.push_back( pFrame );
+			pDecodedFrame = m_vpFrame[ m_nDecodedFrame - 1 ];
 		}
-		pDecodedFrame = m_vpFrame[ m_nDecodedFrame - 1 ];
-	}
 
-	CUDA_DRVAPI_CALL( cuCtxPushCurrent( m_cuContext ) );
-	CUDA_MEMCPY2D m = { 0 };
-	m.srcMemoryType = CU_MEMORYTYPE_DEVICE;
-	m.srcDevice = dpSrcFrame;
-	m.srcPitch = nSrcPitch;
-	m.dstMemoryType = m_bUseDeviceFrame ? CU_MEMORYTYPE_DEVICE : CU_MEMORYTYPE_HOST;
-	m.dstDevice = ( CUdeviceptr )( m.dstHost = pDecodedFrame );
-	m.dstPitch = m_nDeviceFramePitch ? m_nDeviceFramePitch : m_nWidth * m_nBPP;
-	m.WidthInBytes = m_nWidth * m_nBPP;
-	m.Height = m_nLumaHeight;
-	CUDA_DRVAPI_CALL( cuMemcpy2DAsync( &m, m_cuvidStream ) );
+		CUDA_DRVAPI_CALL( cuCtxPushCurrent( m_cuContext ) );
+		CUDA_MEMCPY2D m = { 0 };
+		m.srcMemoryType = CU_MEMORYTYPE_DEVICE;
+		m.srcDevice = dpSrcFrame;
+		m.srcPitch = nSrcPitch;
+		m.dstMemoryType = CU_MEMORYTYPE_HOST;
+		m.dstDevice = ( CUdeviceptr )( m.dstHost = pDecodedFrame );
+		m.dstPitch = m_nDeviceFramePitch ? m_nDeviceFramePitch : m_nWidth * m_nBPP;
+		m.WidthInBytes = m_nWidth * m_nBPP;
+		m.Height = m_nLumaHeight;
+		CUDA_DRVAPI_CALL( cuMemcpy2DAsync( &m, m_cuvidStream ) );
 
-	m.srcDevice = ( CUdeviceptr )( (uint8_t *)dpSrcFrame + m.srcPitch * m_nSurfaceHeight );
-	m.dstDevice = ( CUdeviceptr )( m.dstHost = pDecodedFrame + m.dstPitch * m_nLumaHeight );
-	m.Height = m_nChromaHeight;
-	CUDA_DRVAPI_CALL( cuMemcpy2DAsync( &m, m_cuvidStream ) );
-
-	if ( m_nNumChromaPlanes == 2 ) {
-		m.srcDevice = ( CUdeviceptr )( (uint8_t *)dpSrcFrame + m.srcPitch * m_nSurfaceHeight * 2 );
-		m.dstDevice = ( CUdeviceptr )( m.dstHost = pDecodedFrame + m.dstPitch * m_nLumaHeight * 2 );
+		m.srcDevice = ( CUdeviceptr )( (uint8_t *)dpSrcFrame + m.srcPitch * m_nSurfaceHeight );
+		m.dstDevice = ( CUdeviceptr )( m.dstHost = pDecodedFrame + m.dstPitch * m_nLumaHeight );
 		m.Height = m_nChromaHeight;
 		CUDA_DRVAPI_CALL( cuMemcpy2DAsync( &m, m_cuvidStream ) );
+
+		if ( m_nNumChromaPlanes == 2 ) {
+			m.srcDevice = ( CUdeviceptr )( (uint8_t *)dpSrcFrame + m.srcPitch * m_nSurfaceHeight * 2 );
+			m.dstDevice = ( CUdeviceptr )( m.dstHost = pDecodedFrame + m.dstPitch * m_nLumaHeight * 2 );
+			m.Height = m_nChromaHeight;
+			CUDA_DRVAPI_CALL( cuMemcpy2DAsync( &m, m_cuvidStream ) );
+		}
+		CUDA_DRVAPI_CALL( cuStreamSynchronize( m_cuvidStream ) );
+		CUDA_DRVAPI_CALL( cuCtxPopCurrent( NULL ) );
 	}
-	CUDA_DRVAPI_CALL( cuStreamSynchronize( m_cuvidStream ) );
-	CUDA_DRVAPI_CALL( cuCtxPopCurrent( NULL ) );
 
 	NVDEC_API_CALL( cuvidUnmapVideoFrame( m_hDecoder, dpSrcFrame ) );
 	return 1;
 }
 
-NvDecoder::NvDecoder( CUcontext cuContext, bool bUseDeviceFrame, cudaVideoCodec eCodec, std::mutex *pMutex,
+NvDecoder::NvDecoder( CUcontext cuContext, cudaVideoCodec eCodec,
 					  bool bLowLatency, const Rect *pCropRect, const Dim *pResizeDim, int maxWidth, int maxHeight ) :
   m_cuContext( cuContext ),
-  m_bUseDeviceFrame( bUseDeviceFrame ),
   m_eCodec( eCodec ),
-  m_pMutex( pMutex ),
   m_nMaxWidth( maxWidth ),
   m_nMaxHeight( maxHeight )
 {
@@ -375,9 +369,7 @@ NvDecoder::NvDecoder( CUcontext cuContext, bool bUseDeviceFrame, cudaVideoCodec 
 	videoParserParameters.pfnSequenceCallback = HandleVideoSequenceProc;
 	videoParserParameters.pfnDecodePicture = HandlePictureDecodeProc;
 	videoParserParameters.pfnDisplayPicture = HandlePictureDisplayProc;
-	if ( m_pMutex ) m_pMutex->lock();
 	NVDEC_API_CALL( cuvidCreateVideoParser( &m_hParser, &videoParserParameters ) );
-	if ( m_pMutex ) m_pMutex->unlock();
 }
 
 NvDecoder::~NvDecoder()
@@ -391,25 +383,15 @@ NvDecoder::~NvDecoder()
 	}
 
 	if ( m_hDecoder ) {
-		if ( m_pMutex ) m_pMutex->lock();
 		cuvidDestroyDecoder( m_hDecoder );
-		if ( m_pMutex ) m_pMutex->unlock();
 	}
 
 	std::lock_guard<std::mutex> lock( m_mtxVPFrame );
-	if ( m_vpFrame.size() != m_nFrameAlloc ) {
-		//LOG(WARNING) << "nFrameAlloc(" << m_nFrameAlloc << ") != m_vpFrame.size()(" << m_vpFrame.size() << ")";
-	}
+	// if ( m_vpFrame.size() != m_nFrameAlloc ) {
+	// 	//LOG(WARNING) << "nFrameAlloc(" << m_nFrameAlloc << ") != m_vpFrame.size()(" << m_vpFrame.size() << ")";
+	// }
 	for ( uint8_t *pFrame : m_vpFrame ) {
-		if ( m_bUseDeviceFrame ) {
-			if ( m_pMutex ) m_pMutex->lock();
-			cuCtxPushCurrent( m_cuContext );
-			cuMemFree( (CUdeviceptr)pFrame );
-			cuCtxPopCurrent( NULL );
-			if ( m_pMutex ) m_pMutex->unlock();
-		} else {
-			delete[] pFrame;
-		}
+		delete[] pFrame;
 	}
 	cuvidCtxLockDestroy( m_ctxLock );
 	STOP_TIMER( "Session Deinitialization Time: " );
@@ -417,11 +399,6 @@ NvDecoder::~NvDecoder()
 
 bool NvDecoder::Decode( const uint8_t *pData, int nSize, uint8_t ***pppFrame, int *pnFrameReturned, uint32_t flags, CUstream stream )
 {
-	if ( !m_hParser ) {
-		NVDEC_THROW_ERROR( "Parser not initialized.", CUDA_ERROR_NOT_INITIALIZED );
-		return false;
-	}
-
 	m_nDecodedFrame = 0;
 	CUVIDSOURCEDATAPACKET packet = { 0 };
 	packet.payload = pData;
@@ -431,9 +408,7 @@ bool NvDecoder::Decode( const uint8_t *pData, int nSize, uint8_t ***pppFrame, in
 		packet.flags |= CUVID_PKT_ENDOFSTREAM;
 	}
 	m_cuvidStream = stream;
-	if ( m_pMutex ) m_pMutex->lock();
 	NVDEC_API_CALL( cuvidParseVideoData( m_hParser, &packet ) );
-	if ( m_pMutex ) m_pMutex->unlock();
 	m_cuvidStream = 0;
 
 	if ( m_nDecodedFrame > 0 ) {
@@ -448,18 +423,4 @@ bool NvDecoder::Decode( const uint8_t *pData, int nSize, uint8_t ***pppFrame, in
 		*pnFrameReturned = m_nDecodedFrame;
 	}
 	return true;
-}
-
-bool NvDecoder::DecodeLockFrame( const uint8_t *pData, int nSize, uint8_t ***pppFrame, int *pnFrameReturned, uint32_t flags, CUstream stream )
-{
-	bool ret = Decode( pData, nSize, pppFrame, pnFrameReturned, flags, stream );
-	std::lock_guard<std::mutex> lock( m_mtxVPFrame );
-	m_vpFrame.erase( m_vpFrame.begin(), m_vpFrame.begin() + m_nDecodedFrame );
-	return true;
-}
-
-void NvDecoder::UnlockFrame( uint8_t **ppFrame, int nFrame )
-{
-	std::lock_guard<std::mutex> lock( m_mtxVPFrame );
-	m_vpFrame.insert( m_vpFrame.end(), &ppFrame[ 0 ], &ppFrame[ nFrame ] );
 }
