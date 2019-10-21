@@ -23,10 +23,7 @@ VM_EXPORT
 		~Decompressor();
 
 		void decompress( Reader &reader, Writer &writer );
-		std::future<cufx::Result> decompress( Reader &reader, cufx::GlobalMemory const &swap,
-												cufx::Array3D<unsigned char> const &dst,
-												cufx::Extent const &dim,
-												cufx::Stream const &stream = cufx::Stream::null() );
+		void decompress( Reader &reader, cufx::MemoryView1D<unsigned char> const &swap );
 
 		void transfer( Reader &reader, Writer &writer ) override
 		{

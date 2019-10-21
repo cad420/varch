@@ -68,13 +68,11 @@ struct DecompressorImpl final : vm::NoCopy, vm::NoMove
 		// } );
 	}
 
-	std::future<cufx::Result> decompress( Reader &reader, cufx::GlobalMemory const &swap,
-								   cufx::Array3D<unsigned char> const &dst,
-								   cufx::Extent const &dim,
-								   cufx::Stream const &stream )
+	void decompress( Reader &reader, cufx::MemoryView1D<unsigned char> const &swap )
 	{
 		// assert(swap.size() == block_size)
-		auto dp_swap = swap.get();
+		auto stream = cufx::Stream{};
+		auto dp_swap = swap.ptr();
 		auto lock = stream.lock();
 		auto on_picture_display = [&]( CUdeviceptr dp_src, unsigned src_pitch ) {
 			cuCtxPushCurrent( ctx );  //ck
@@ -109,12 +107,6 @@ struct DecompressorImpl final : vm::NoCopy, vm::NoMove
 				  dec->Decode( reinterpret_cast<uint8_t *>( packet ), len, nullptr, nullptr );
 			  }
 		  } );
-		auto view_info = cufx::MemoryView2DInfo{}
-						   .set_stride( dim.width * sizeof( char ) )
-						   .set_width( dim.width )
-						   .set_height( dim.height );
-		auto view = cufx::MemoryView3D<unsigned char>( swap.get(), view_info, dim );
-		return cufx::memory_transfer( dst, view ).launch_async( stream );
 	}
 
 private:
@@ -136,12 +128,9 @@ VM_EXPORT
 		_->decompress( reader, writer );
 	}
 
-	std::future<cufx::Result> Decompressor::decompress( Reader & reader, cufx::GlobalMemory const &swap,
-												 cufx::Array3D<unsigned char> const &dst,
-												 cufx::Extent const &dim,
-												 cufx::Stream const &stream )
+	void Decompressor::decompress( Reader & reader, cufx::MemoryView1D<unsigned char> const &swap )
 	{
-		return _->decompress( reader, swap, dst, dim, stream );
+		return _->decompress( reader, swap );
 	}
 }
 
