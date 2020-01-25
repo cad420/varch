@@ -12,7 +12,7 @@ namespace vol
 {
 VM_BEGIN_MODULE( refine )
 
-using namespace ysl;
+using namespace vm;
 
 using Voxel = char;
 
@@ -169,7 +169,7 @@ public:
 			if ( not nrows_per_stride ) { /*nblocks_in_mem < nBlocksPerRow*/
 				nrows_per_stride = 1;
 				ncols_per_stride = nblocks_in_mem;
-				stride_interval = ysl::RoundUpDivide( ncols, ncols_per_stride );
+				stride_interval = vm::RoundUpDivide( ncols, ncols_per_stride );
 			}
 			return std::make_tuple( ncols_per_stride, nrows_per_stride, stride_interval );
 		}();
@@ -177,7 +177,7 @@ public:
 		vm::println( "stride size: {} x {} = {} block(s)",
 					 ncols_per_stride, nrows_per_stride, nblocks_per_stride );
 
-		const int nrow_iters = ysl::RoundUpDivide( nrows, nrows_per_stride );
+		const int nrow_iters = vm::RoundUpDivide( nrows, nrows_per_stride );
 
 		vm::println( "total strides: {}", nrow_iters * stride_interval * nslices );
 
@@ -316,7 +316,7 @@ public:
 
 				++read_blocks;
 			};
-			const int REV_INTERVAL = std::max(nblocks_per_stride / 20, 1);
+			const int REV_INTERVAL = std::max( nblocks_per_stride / 20, 1 );
 			atomic<int> interval( 0 );
 			auto write_task = [&]( SliceReader block, size_t blkid ) {
 				//vm::println( "write block {}", blkid );
