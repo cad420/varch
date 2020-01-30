@@ -36,7 +36,7 @@ int main( int argc, char **argv )
 	a.add<int>( "z", 'z', "raw.z", true );
 	a.add<size_t>( "memlimit", 'm', "maximum memory limit in gb", false, system_memory_gb / 2 );
 	a.add<int>( "padding", 'p', "block padding", false, 2, cmdline::oneof<int>( 0, 1, 2 ) );
-	a.add<int>( "side", 's', "block size in log(voxel)", false, 6, cmdline::oneof<int>( 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ) );
+	a.add<int>( "side", 's', "block size in log(voxel)", false, 6, cmdline::oneof<int>( 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ) );
 	a.add<string>( "device", 'd', "video compression device: default/cuda/cpu", false, "default", cmdline::oneof<string>( "default", "cuda", "cpu" ) );
 	a.add<string>( "of", 'o', "output filename", true );
 
