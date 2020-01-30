@@ -69,6 +69,10 @@ VM_EXPORT
 	{
 	}
 
+	StatisticsCollector::~StatisticsCollector()
+	{
+	}
+
 	void StatisticsCollector::compute_into( Idx const &idx, Statistics &dst )
 	{
 		return _->compute_into( idx, dst );
