@@ -67,9 +67,9 @@ VM_EXPORT
 	public:
 		std::size_t unarchive_to( Idx const &idx,
 								  cufx::MemoryView1D<unsigned char> const &dst );
-		// // block_idx ->
-		// void batch_unarchive( std::vector<Idx> const &blocks,
-		// 					  std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer );
+		// block_idx ->
+		void unarchive( std::vector<Idx> const &blocks,
+						std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer );
 		// std::size_t unarchive_to( Idx const &block,
 		// 							cufx::MemoryView1D<unsigned char> const &buffer )
 		// {

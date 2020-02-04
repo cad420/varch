@@ -38,8 +38,8 @@ struct UnarchiverImpl
 	}
 
 public:
-	void unarchive_to( std::vector<Idx> const &blocks_const,
-					   std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer )
+	void unarchive( std::vector<Idx> const &blocks_const,
+					std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer )
 	{
 		auto blocks = blocks_const;
 		vector<int64_t> linked_block_offsets;
@@ -82,7 +82,7 @@ public:
 	std::size_t unarchive_to( Idx const &idx, cufx::MemoryView1D<unsigned char> const &dst )
 	{
 		std::size_t len;
-		unarchive_to(
+		unarchive(
 		  { idx },
 		  [&]( Idx const &, VoxelStreamPacket const &pkt ) {
 			  len += pkt.length;
@@ -150,46 +150,11 @@ VM_EXPORT
 		return _->unarchive_to( idx, dst );
 	}
 
-	// void Unarchiver::batch_unarchive( vector<Idx> const &blocks,
-	// 								  std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer )
-	// {
-	// 	auto sorted_blocks = blocks;
-	// 	vector<int64_t> linked_block_offsets;
-	// 	auto reader = sort_and_get_reader( sorted_blocks, linked_block_offsets );
-	// 	int i = 0;
-	// 	int64_t curr_block_offset = 0;
-	// 	int64_t linked_read_pos = 0;
-	// 	int64_t block_bytes = header.block_size * header.block_size * header.block_size;
-	// 	decomp.decode(
-	// 	  reader,
-	// 	  [&]( NvBitStreamPacket const &packet ) {
-	// 		  while ( i < linked_block_offsets.size() ) {
-	// 			  //   vm::println( ">>>>>>{} {} {} {} {} {}<<<<<<", i, sorted_blocks[ i ], linked_block_offsets.size(), linked_block_offsets[ i ], curr_block_offset, linked_read_pos );
-	// 			  int64_t inpacket_offset = linked_block_offsets[ i ] + curr_block_offset - linked_read_pos;
-	// 			  // buffer contains current block
-	// 			  if ( inpacket_offset >= 0 && inpacket_offset < packet.length ) {
-	// 				  int64_t inpacket_max_len = packet.length - inpacket_offset;
-	// 				  auto len = std::min( inpacket_max_len,
-	// 									   block_bytes - curr_block_offset );
-	// 				  VoxelStreamPacket blk_packet( packet, inpacket_offset );
-	// 				  blk_packet.offset = curr_block_offset;
-	// 				  blk_packet.length = len;
-	// 				  consumer( sorted_blocks[ i ], blk_packet );
-
-	// 				  curr_block_offset += len;
-	// 				  if ( curr_block_offset >= block_bytes ) {
-	// 					  curr_block_offset = 0;
-	// 					  i++;
-	// 				  } else {
-	// 					  break;
-	// 				  }
-	// 			  } else {
-	// 				  break;
-	// 			  }
-	// 		  }
-	// 		  linked_read_pos += packet.length;
-	// 	  } );
-	// }
+	void Unarchiver::unarchive( vector<Idx> const &blocks,
+								function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer )
+	{
+		return _->unarchive( blocks, consumer );
+	}
 }
 
 VM_END_MODULE()
