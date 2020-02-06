@@ -52,7 +52,7 @@ public:
 		  reader,
 		  [&]( Packet const &packet ) {
 			  while ( i < linked_block_offsets.size() ) {
-				  //   vm::println( ">>>>>>{} {} {} {} {} {}<<<<<<", i, sorted_blocks[ i ], linked_block_offsets.size(), linked_block_offsets[ i ], curr_block_offset, linked_read_pos );
+				  //   vm::println( ">>>>>>{} {} {} {} {} {}<<<<<<", i, blocks[ i ], linked_block_offsets.size(), linked_block_offsets[ i ], curr_block_offset, linked_read_pos );
 				  int64_t inpacket_offset = linked_block_offsets[ i ] + curr_block_offset - linked_read_pos;
 				  // buffer contains current block
 				  if ( inpacket_offset >= 0 && inpacket_offset < packet.length ) {

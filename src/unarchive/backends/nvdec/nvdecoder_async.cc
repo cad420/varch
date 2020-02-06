@@ -381,7 +381,7 @@ int NvDecoderAsyncImpl::handle_picture_display( CUVIDPARSERDISPINFO *info )
 		( *consumer )( packet );
 	}
 
-	CUDA_DRVAPI_CALL( cuCtxPopCurrent( nullptr ) );	 //ck
+	CUDA_DRVAPI_CALL( cuCtxPopCurrent( nullptr ) );  //ck
 
 	return 1;
 }
