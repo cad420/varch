@@ -23,9 +23,9 @@ int main( int argc, char **argv )
 	a.parse_check( argc, argv );
 
 	auto in = FilePath( a.get<string>( "in" ) );
-	ensure_file( in.path() );
+	ensure_file( in.resolved() );
 	auto out = FilePath( a.get<string>( "out" ) );
-	mkdir_p( out.path() );
+	mkdir_p( out.resolved() );
 	auto dim = vm::Vec3i(
 	  a.get<int>( "x" ),
 	  a.get<int>( "y" ),
@@ -37,8 +37,8 @@ int main( int argc, char **argv )
 	  vm::RoundUpDivide( dim.y, s ),
 	  vm::RoundUpDivide( dim.z, s ) );
 
-	vm::RawReaderIO input( in.path(), vm::Size3( dim ), sizeof( char ) );
-	auto out_path = out.resolve( FilePath( vm::fmt( "{}_x{}.raw", in.baseName(), s ) ) ).path();
+	vm::RawReaderIO input( in.resolved(), vm::Size3( dim ), sizeof( char ) );
+	auto out_path = out.resolve( FilePath( vm::fmt( "{}_x{}.raw", in.baseName(), s ) ) ).resolved();
 	ofstream os( out_path, ios::binary );
 	vector<unsigned char> buf( dim.x * dim.y * s );
 

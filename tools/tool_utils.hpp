@@ -13,8 +13,22 @@ inline void ensure_file( std::string const &path_v )
 		vm::eprintln( "the specified path '{}' doesn't exist",
 					  path_v );
 		exit( 1 );
-	} else if ( path.isFile() ) {
+	} else if ( !path.isFile() ) {
 		vm::eprintln( "the specified path '{}' is not a file",
+					  path_v );
+		exit( 1 );
+	}
+}
+
+inline void ensure_dir( std::string const &path_v )
+{
+	auto path = cppfs::fs::open( path_v );
+	if ( !path.exists() ) {
+		vm::eprintln( "the specified path '{}' doesn't exist",
+					  path_v );
+		exit( 1 );
+	} else if ( !path.isDirectory() ) {
+		vm::eprintln( "the specified path '{}' is not a directory",
 					  path_v );
 		exit( 1 );
 	}

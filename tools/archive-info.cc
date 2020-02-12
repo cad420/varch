@@ -6,6 +6,7 @@
 #include "tool_utils.hpp"
 
 using namespace std;
+using namespace cppfs;
 
 int main( int argc, char **argv )
 {
@@ -15,10 +16,10 @@ int main( int argc, char **argv )
 	a.parse_check( argc, argv );
 
 	try {
-		auto in = a.get<string>( "in" );
-		ensure_file( in );
+		auto in = FilePath( a.get<string>( "in" ) );
+		ensure_file( in.resolved() );
 
-		ifstream is( in, std::ios::ate | std::ios::binary );
+		ifstream is( in.resolved(), std::ios::ate | std::ios::binary );
 		auto len = is.tellg();
 		vol::StreamReader reader( is, 0, len );
 		vol::Unarchiver e( reader );

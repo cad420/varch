@@ -6,6 +6,7 @@
 #include <VMUtils/modules.hpp>
 #include <cudafx/memory.hpp>
 #include "io.hpp"
+#include "idx.hpp"
 
 VM_BEGIN_MODULE( vol )
 
@@ -32,7 +33,7 @@ VM_EXPORT
 	{
 		Default = 0,
 		Cuda, /* cuda runtime & nvidia driver >= 418 */
-		Cpu	  /* openh264 libs required */
+		Cpu   /* openh264 libs required */
 	};
 
 	struct EncodeOptions
@@ -71,36 +72,6 @@ VM_EXPORT
 		friend ostream &operator<<( ostream &os, BlockIndex const &_ )
 		{
 			vm::fprint( os, "{{ f0: {}, f1: {}, offset:{} }}", _.first_frame, _.last_frame, _.offset );
-			return os;
-		}
-	};
-
-	struct Idx
-	{
-		VM_DEFINE_ATTRIBUTE( uint32_t, x );
-		VM_DEFINE_ATTRIBUTE( uint32_t, y );
-		VM_DEFINE_ATTRIBUTE( uint32_t, z );
-
-		uint64_t total() const { return (uint64_t)x * y * z; }
-
-		bool operator<( Idx const &other ) const
-		{
-			return x < other.x ||
-				   x == other.x && ( y < other.y ||
-									 y == other.y && z < other.z );
-		}
-		bool operator==( Idx const &other ) const
-		{
-			return x == other.x && y == other.y && z == other.z;
-		}
-		bool operator!=( Idx const &other ) const
-		{
-			return !( *this == other );
-		}
-
-		friend ostream &operator<<( ostream &os, Idx const &_ )
-		{
-			vm::fprint( os, "{}", make_tuple( _.x, _.y, _.z ) );
 			return os;
 		}
 	};

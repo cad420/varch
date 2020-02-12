@@ -49,9 +49,9 @@ int main( int argc, char **argv )
 	a.parse_check( argc, argv );
 
 	auto in = FilePath( a.get<string>( "in" ) );
-	ensure_file( in.path() );
+	ensure_file( in.resolved() );
 	auto out = FilePath( a.get<string>( "out" ) );
-	mkdir_p( out.path() );
+	mkdir_p( out.resolved() );
 	auto x = a.get<int>( "x" );
 	auto y = a.get<int>( "y" );
 	auto z = a.get<int>( "z" );
@@ -68,7 +68,7 @@ int main( int argc, char **argv )
 					  .set_log_block_size( log )
 					  .set_padding( padding )
 					  .set_suggest_mem_gb( mem )
-					  .set_input( in.path() );
+					  .set_input( in.resolved() );
 
 		auto &compress_opts = opts.compress_opts;
 		compress_opts = EncodeOptions{}
@@ -87,7 +87,7 @@ int main( int argc, char **argv )
 		}
 
 		auto short_name = vm::fmt( "{}_{}p{}.h264", in.baseName(), 1 << log, padding );
-		opts.set_output( out.resolve( FilePath( short_name ).path() ).path() );
+		opts.set_output( out.resolve( FilePath( short_name ) ).resolved() );
 
 		{
 			Archiver archiver( opts );

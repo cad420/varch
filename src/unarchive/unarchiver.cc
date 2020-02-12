@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <VMUtils/timer.hpp>
 #include <varch/unarchive/unarchiver.hpp>
 #include <varch/utils/linked_reader.hpp>
 #include "idecoder.hpp"
@@ -48,9 +49,14 @@ public:
 		int64_t curr_block_offset = 0;
 		int64_t linked_read_pos = 0;
 		int64_t block_bytes = data.header.block_size * data.header.block_size * data.header.block_size;
+		int nframes = 0;
+		// vm::Timer::Scoped t( [&]( auto dt ) {
+		// 	vm::println( "dt = {}, nframes = {}, fps = {}", dt.ms(), nframes, double( nframes ) / dt.s().cnt() );
+		// } );
 		decoder->decode(
 		  reader,
 		  [&]( Packet const &packet ) {
+			  nframes += 1;
 			  while ( i < linked_block_offsets.size() ) {
 				  //   vm::println( ">>>>>>{} {} {} {} {} {}<<<<<<", i, blocks[ i ], linked_block_offsets.size(), linked_block_offsets[ i ], curr_block_offset, linked_read_pos );
 				  int64_t inpacket_offset = linked_block_offsets[ i ] + curr_block_offset - linked_read_pos;

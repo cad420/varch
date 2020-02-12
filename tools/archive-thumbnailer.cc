@@ -126,12 +126,12 @@ int main( int argc, char **argv )
 	a.parse_check( argc, argv );
 
 	auto in = FilePath( a.get<string>( "in" ) );
-	ensure_file( in.path() );
+	ensure_file( in.resolved() );
 	auto out = FilePath( a.get<string>( "out" ) );
-	mkdir_p( out.path() );
+	mkdir_p( out.resolved() );
 	auto val = a.get<set<Value>>( "values" );
 
-	ifstream is( in.path(), ios::ate | ios::binary );
+	ifstream is( in.resolved(), ios::ate | ios::binary );
 	auto len = is.tellg();
 	StreamReader reader( is, 0, len );
 	Unarchiver unarchiver( reader );
@@ -160,7 +160,7 @@ int main( int argc, char **argv )
 		  } );
 
 		write_thumb( *mean,
-					 out.resolve( FilePath( in.baseName() + ".mean" ) ).path() );
+					 out.resolve( FilePath( in.baseName() + ".mean" ) ).resolved() );
 	}
 
 	if ( val.count( Chebyshev ) ) {
@@ -172,6 +172,6 @@ int main( int argc, char **argv )
 		chebyshev( chebyshev_thumb, *mean, 0 );
 
 		write_thumb( chebyshev_thumb,
-					 out.resolve( FilePath( in.baseName() + ".chebyshev" ) ).path() );
+					 out.resolve( FilePath( in.baseName() + ".chebyshev" ) ).resolved() );
 	}
 }

@@ -23,6 +23,10 @@ if(VARCH_BUILD_UNARCHIVER)
   cuda_add_executable(archive-thumbnailer archive-thumbnailer.cc)
   vm_target_dependency(archive-thumbnailer voxel_unarchive PRIVATE)
   vm_target_dependency(archive-thumbnailer cppfs PRIVATE)
+
+  cuda_add_executable(meta-builder meta-builder.cc)
+  vm_target_dependency(meta-builder voxel_unarchive PRIVATE)
+  vm_target_dependency(meta-builder cppfs PRIVATE)
 endif()
 
 add_executable(downsampler downsampler.cc)
