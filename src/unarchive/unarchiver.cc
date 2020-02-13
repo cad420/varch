@@ -48,7 +48,7 @@ public:
 		int i = 0;
 		int64_t curr_block_offset = 0;
 		int64_t linked_read_pos = 0;
-		int64_t block_bytes = data.header.block_size * data.header.block_size * data.header.block_size;
+		int64_t block_bytes = data.header.padded_block_size * data.header.padded_block_size * data.header.padded_block_size;
 		int nframes = 0;
 		// vm::Timer::Scoped t( [&]( auto dt ) {
 		// 	vm::println( "dt = {}, nframes = {}, fps = {}", dt.ms(), nframes, double( nframes ) / dt.s().cnt() );
@@ -87,7 +87,7 @@ public:
 
 	std::size_t unarchive_to( Idx const &idx, cufx::MemoryView1D<unsigned char> const &dst )
 	{
-		std::size_t len;
+		std::size_t len = 0;
 		unarchive(
 		  { idx },
 		  [&]( Idx const &, VoxelStreamPacket const &pkt ) {

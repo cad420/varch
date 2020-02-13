@@ -136,7 +136,7 @@ int main( int argc, char **argv )
 	StreamReader reader( is, 0, len );
 	Unarchiver unarchiver( reader );
 
-	const double max_t = 8, avg_t = 1e-3;
+	const double max_t = 64, avg_t = 1.f;
 
 	Statistics stats;
 	StatisticsCollector collector( unarchiver );
@@ -157,6 +157,7 @@ int main( int argc, char **argv )
 			  } else {
 				  ( *mean )[ idx ] = stats.src.avg;
 			  }
+			  vm::println( "{} -> {}, {} -> {}", idx, stats.src.max, stats.src.avg, ( *mean )[ idx ] );
 		  } );
 
 		write_thumb( *mean,

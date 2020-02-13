@@ -11,12 +11,6 @@ VM_BEGIN_MODULE( vol )
 
 VM_EXPORT
 {
-	// struct MtThumbnail : vm::json::Serializable<MtThumbnail>
-	// {
-	// 	VM_JSON_FIELD( std::string, value );
-	// 	VM_JSON_FIELD( std::string, path );
-	// };
-
 	struct MtArchive : vm::json::Serializable<MtArchive>
 	{
 		using MtStringDict = std::unordered_map<std::string, std::string>;
