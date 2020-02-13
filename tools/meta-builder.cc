@@ -69,6 +69,7 @@ int main( int argc, char **argv )
 		}
 	}
 
+	auto raw = lvls.begin()->first;
 	for ( auto &e : lvls ) {
 		e.second.raw = e.first;
 		std::sort(
@@ -76,7 +77,8 @@ int main( int argc, char **argv )
 		  []( const MtArchive &a, const MtArchive &b ) {
 			  return a.block_size > b.block_size;
 		  } );
-		meta.sample_levels.emplace_back( std::move( e.second ) );
+		int lvl = log2( raw.x / e.second.raw.x );
+		meta.sample_levels[ lvl ] = std::move( e.second );
 	}
 
 	ofstream os( dir.resolve( "package_meta.json" ).resolved() );
