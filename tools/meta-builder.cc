@@ -1,5 +1,6 @@
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include <VMUtils/cmdline.hpp>
 #include <varch/package_meta.hpp>
 #include <varch/unarchive/unarchiver.hpp>

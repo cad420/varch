@@ -87,8 +87,8 @@ VM_EXPORT
 		auto dim() const { return data.header.dim; }
 		auto adjusted() const { return data.header.adjusted; }
 		auto log_block_size() const { return data.header.log_block_size; }
+		auto padded_block_size() const { return data.header.padded_block_size; }
 		auto block_size() const { return data.header.block_size; }
-		auto block_inner() const { return data.header.block_inner; }
 		auto padding() const { return data.header.padding; }
 		auto frame_size() const { return data.header.frame_size; }
 

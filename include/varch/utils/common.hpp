@@ -97,8 +97,8 @@ struct Header
 	VM_DEFINE_ATTRIBUTE( Idx, dim );
 	VM_DEFINE_ATTRIBUTE( Idx, adjusted );
 	VM_DEFINE_ATTRIBUTE( uint64_t, log_block_size );
+	VM_DEFINE_ATTRIBUTE( uint64_t, padded_block_size );
 	VM_DEFINE_ATTRIBUTE( uint64_t, block_size );
-	VM_DEFINE_ATTRIBUTE( uint64_t, block_inner );
 	VM_DEFINE_ATTRIBUTE( uint64_t, padding );
 	VM_DEFINE_ATTRIBUTE( uint64_t, encode_method ) = 0;
 	VM_DEFINE_ATTRIBUTE( uint64_t, frame_size );
@@ -106,15 +106,15 @@ struct Header
 	friend std::ostream &operator<<( std::ostream &os, Header const &header )
 	{
 		vm::fprint( os, "version: {}\nraw: {}\ndim: {}\nadjusted: {}\n"
-						"log_block_size: {}\nblock_size: {}\nblock_inner: {}\n"
+						"log_block_size: {}\npadded_block_size: {}\block_size: {}\n"
 						"padding: {}\nframe_size: {}",
 					header.version,
 					header.raw,
 					header.dim,
 					header.adjusted,
 					header.log_block_size,
+					header.padded_block_size,
 					header.block_size,
-					header.block_inner,
 					header.padding,
 					header.frame_size );
 		return os;
