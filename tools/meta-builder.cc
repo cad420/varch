@@ -26,7 +26,7 @@ int main( int argc, char **argv )
 	{
 		bool operator()( const Idx &a, const Idx &b ) const
 		{
-			return a.total() < b.total();
+			return a.total() > b.total();
 		}
 	};
 	map<Idx, MtSampleLevel, SampleLvlLess> lvls;
@@ -62,26 +62,25 @@ int main( int argc, char **argv )
 			auto path = FilePath( filename );
 			auto sig = FilePath( path.extension().substr( 1 ) );
 			if ( sig.extension() == ".thumb" ) {
-				auto arch = path.baseName() + ".h264";
-				// vm::println( "{}", arch );
-				auto &idx = iarch[ arch ];
-				auto thumb = MtThumbnail{}
-							   .set_value( file )
-							   .set_path( arch );
+				auto &idx = iarch[ path.baseName() + ".h264" ];
 				auto &thumbs = lvls[ idx.first ].archives[ idx.second ].thumbnails;
-				thumbs.emplace_back( std::move( thumb ) );
+				thumbs[ sig.baseName() ] = file;
 			}
 		}
 	}
 
 	for ( auto &e : lvls ) {
 		e.second.raw = e.first;
+		std::sort(
+		  e.second.archives.begin(), e.second.archives.end(),
+		  []( const MtArchive &a, const MtArchive &b ) {
+			  return a.block_size > b.block_size;
+		  } );
 		meta.sample_levels.emplace_back( std::move( e.second ) );
 	}
 
 	ofstream os( dir.resolve( "package_meta.json" ).resolved() );
 	auto writer = vm::json::Writer{}
-					.set_pretty( true )
 					.set_indent( 2 );
 	writer.write( os, meta );
 }
