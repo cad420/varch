@@ -36,7 +36,7 @@ VM_EXPORT
 		VM_JSON_FIELD( MtSampleLevelDict, sample_levels );
 	};
 
-	void to_json( nlohmann::json & j, PackageMeta::MtSampleLevelDict const &e )
+	inline void to_json( nlohmann::json & j, PackageMeta::MtSampleLevelDict const &e )
 	{
 		j = nlohmann::json::object();
 		for ( auto &p : e ) {
@@ -44,7 +44,7 @@ VM_EXPORT
 		}
 	}
 
-	void from_json( nlohmann::json const &j, PackageMeta::MtSampleLevelDict &e )
+	inline void from_json( nlohmann::json const &j, PackageMeta::MtSampleLevelDict &e )
 	{
 		e.clear();
 		for ( auto it = j.begin(); it != j.end(); ++it ) {

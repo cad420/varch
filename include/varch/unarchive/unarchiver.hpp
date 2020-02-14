@@ -59,7 +59,7 @@ VM_EXPORT
 		unsigned inner_offset;
 	};
 
-	struct Unarchiver final : vm::NoCopy, vm::NoMove
+	struct Unarchiver : vm::NoCopy, vm::NoMove
 	{
 		Unarchiver( Reader &reader, DecodeOptions const &opts = {} );
 		~Unarchiver();
