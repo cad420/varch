@@ -13,6 +13,7 @@ VM_BEGIN_MODULE( vol )
 
 VM_EXPORT
 {
+	template <typename T>
 	struct Thumbnail
 	{
 		Thumbnail( vol::Idx const &dim ) :
@@ -36,17 +37,17 @@ VM_EXPORT
 		}
 
 	public:
-		float *data() { return buf.data(); }
-		float const *data() const { return buf.data(); }
+		T *data() { return buf.data(); }
+		T const *data() const { return buf.data(); }
 
-		float &operator[]( vol::Idx const &idx )
+		T &operator[]( vol::Idx const &idx )
 		{
 			return buf[ idx.z * dim.x * dim.y +
 						idx.y * dim.x +
 						idx.x ];
 		}
 
-		float const &operator[]( vol::Idx const &idx ) const
+		T const &operator[]( vol::Idx const &idx ) const
 		{
 			return buf[ idx.z * dim.x * dim.y +
 						idx.y * dim.x +
@@ -88,7 +89,7 @@ VM_EXPORT
 		VM_DEFINE_ATTRIBUTE( vol::Idx, dim );
 
 	private:
-		std::vector<float> buf;
+		std::vector<T> buf;
 	};
 }
 

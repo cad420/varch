@@ -53,7 +53,7 @@ ostream &operator<<( ostream &os, set<Value> const &ss )
 	return os;
 }
 
-void chebyshev( Thumbnail &dst, Thumbnail const &value, float threshold )
+void chebyshev( Thumbnail<int> &dst, Thumbnail<float> const &value, float threshold )
 {
 	auto &dim = dst.dim;
 	auto maxd = std::max( dim.x, std::max( dim.y, dim.z ) );
@@ -109,7 +109,8 @@ void chebyshev( Thumbnail &dst, Thumbnail const &value, float threshold )
 	} while ( update );
 }
 
-void write_thumb( Thumbnail const &thumb, string const &name )
+template <typename T>
+void write_thumb( Thumbnail<T> const &thumb, string const &name )
 {
 	ofstream os( name + ".thumb" );
 	UnboundedStreamWriter writer( os );
@@ -141,9 +142,9 @@ int main( int argc, char **argv )
 	Statistics stats;
 	StatisticsCollector collector( unarchiver );
 
-	shared_ptr<Thumbnail> mean;
+	shared_ptr<Thumbnail<float>> mean;
 	if ( val.count( Mean ) || val.count( Chebyshev ) ) {
-		mean.reset( new Thumbnail( unarchiver.dim() ) );
+		mean.reset( new Thumbnail<float>( unarchiver.dim() ) );
 		vm::Timer::Scoped timer(
 		  [&]( auto dt ) {
 			  vm::println( "mean compute time: {}", dt.ms() );
@@ -165,7 +166,7 @@ int main( int argc, char **argv )
 	}
 
 	if ( val.count( Chebyshev ) ) {
-		Thumbnail chebyshev_thumb( unarchiver.dim() );
+		Thumbnail<int> chebyshev_thumb( unarchiver.dim() );
 		vm::Timer::Scoped timer(
 		  [&]( auto dt ) {
 			  vm::println( "chebyshev compute time: {}", dt.ms() );
