@@ -53,16 +53,15 @@ int main( int argc, char **argv )
 		input.readRegion( start, size, buf.data() );
 		for ( int y = 0; y < dim.y; y += s ) {
 			for ( int x = 0; x < dim.x; x += s ) {
-				unsigned v = 0, n = 0;
+				unsigned char v = 0;
 				for ( int k = 0; k < dz; ++k ) {
 					for ( int j = y; j < y + s && j < dim.y; ++j ) {
 						for ( int i = x; i < x + s && s < dim.x; ++i ) {
-							v += buf[ k * dim.x + dim.y + j * dim.x + i ];
-							n++;
+							v = std::max( buf[ k * dim.x + dim.y + j * dim.x + i ], v );
 						}
 					}
 				}
-				res.emplace_back( vm::Clamp( round( double( v ) / n ), 0, 255 ) );
+				res.emplace_back( vm::Clamp( round( v ), 0, 255 ) );
 			}
 		}
 
