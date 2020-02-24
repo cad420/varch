@@ -137,10 +137,12 @@ int main( int argc, char **argv )
 	StreamReader reader( is, 0, len );
 	Unarchiver unarchiver( reader );
 
-	const double max_t = 64, avg_t = 1.f;
+	const double ratio_t = 1e-4, avg_t = 1.f;
 
 	Statistics stats;
 	StatisticsCollector collector( unarchiver );
+	stats.percent.resize( 1 );
+	stats.percent[ 0 ].threshold = 128;
 
 	shared_ptr<Thumbnail<float>> mean;
 	if ( val.count( Mean ) || val.count( Chebyshev ) ) {
@@ -152,13 +154,16 @@ int main( int argc, char **argv )
 		mean->iterate_3d(
 		  [&]( Idx const &idx ) {
 			  collector.compute_into( idx, stats );
-			  if ( stats.src.max < max_t && stats.src.avg < avg_t ) {
+			  if ( stats.percent[ 0 ].percentage < ratio_t &&
+				   stats.src.avg < avg_t ) {
 				  ( *mean )[ idx ] = 0;
 				  // continue;
 			  } else {
 				  ( *mean )[ idx ] = stats.src.avg;
 			  }
-			  vm::println( "{} -> {}, {} -> {}", idx, stats.src.max, stats.src.avg, ( *mean )[ idx ] );
+			  vm::println( "{} -> {}%, {} -> {}",
+						   idx, stats.percent[ 0 ].percentage * 100, stats.src.avg,
+						   ( *mean )[ idx ] );
 		  } );
 
 		write_thumb( *mean,

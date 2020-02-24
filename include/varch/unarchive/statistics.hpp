@@ -29,9 +29,16 @@ VM_EXPORT
 		}
 	};
 
+	struct PercentageStatistics
+	{
+		unsigned char threshold;
+		float percentage;
+	};
+
 	struct Statistics
 	{
 		BasicStatistics src, raw, diff;
+		std::vector<PercentageStatistics> percent;
 	};
 
 	struct StatisticsCollector : vm::NoCopy, vm::NoMove

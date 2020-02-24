@@ -29,6 +29,16 @@ struct StatisticsCollectorImpl
 		unarchiver.unarchive_to( idx, buffer );
 		dst.src.compute_from( buffer );
 
+		for ( auto &pp : dst.percent ) {
+			float num = 0;
+			for ( auto &e : buffer ) {
+				if ( e > pp.threshold ) {
+					num += 1.f;
+				}
+			}
+			pp.percentage = num / N.Prod();
+		}
+
 		if ( raw_input ) {
 			const auto N_i = Vec3i( unarchiver.block_size() );
 			const auto P = unarchiver.padding();
