@@ -275,6 +275,8 @@ public:
 					}
 				}
 			}
+
+			vm::println( "waiting for video compressor..." );
 			video_compressor.wait();
 		}
 
