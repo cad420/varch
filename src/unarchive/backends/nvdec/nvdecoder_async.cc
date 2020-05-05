@@ -129,11 +129,11 @@ struct NvDecoderAsyncImpl final : vm::NoCopy, vm::NoMove
 {
 	uint8_t *get_packet( uint32_t len )
 	{
-		thread_local auto _ = std::vector<uint8_t>( 1024 );
-		if ( len > _.size() ) {
-			_.resize( len );
+		thread_local std::vector<uint8_t> pkt_buffer(1024);
+		if ( len > pkt_buffer.size() ) {
+			pkt_buffer.resize( len );
 		}
-		return _.data();
+		return pkt_buffer.data();
 	}
 
 	/* async decode procedure */
@@ -209,6 +209,7 @@ private:
 
 private:
 	cufx::drv::Context ctx = 0;
+	std::vector<uint8_t> pkt_buffer;
 	// std::unique_ptr<NvDecoder> dec;
 	CUvideoctxlock ctxlock = nullptr;
 	CUvideoparser parser = nullptr;
