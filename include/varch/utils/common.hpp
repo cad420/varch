@@ -47,6 +47,7 @@ VM_EXPORT
 	struct DecodeOptions
 	{
 		VM_DEFINE_ATTRIBUTE( ComputeDevice, device ) = ComputeDevice::Default;
+		VM_DEFINE_ATTRIBUTE( int, device_id ) = 0;
 		VM_DEFINE_ATTRIBUTE( unsigned, io_queue_size ) = 4;
 	};
 
