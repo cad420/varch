@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <glog/logging.h>
 #include <VMUtils/cmdline.hpp>
 #include <varch/package_meta.hpp>
 #include <varch/unarchive/unarchiver.hpp>
@@ -20,8 +21,6 @@ int main( int argc, char **argv )
 	auto dir = FilePath( a.get<string>( "dir" ) );
 	ensure_dir( dir.resolved() );
 
-	PackageMeta meta;
-
 	struct SampleLvlLess
 	{
 		bool operator()( const Idx &a, const Idx &b ) const
@@ -30,8 +29,10 @@ int main( int argc, char **argv )
 		}
 	};
 	map<Idx, MtSampleLevel, SampleLvlLess> lvls;
-	map<string, pair<Idx, size_t>> iarch;
+	map<string, Idx> iarch;
 
+	int block_size = -1;
+	int padding = -1;
 	auto files = fs::open( dir.resolved() ).listFiles();
 	for ( auto &file : files ) {
 		auto filename = dir.resolve( file ).resolved();
@@ -43,18 +44,32 @@ int main( int argc, char **argv )
 				auto len = fip->tellg();
 				StreamReader reader( *fip, 0, len );
 				Unarchiver uu( reader );
-				auto arch = MtArchive{}
+				if ( block_size != -1 ) {
+					if ( block_size != uu.block_size() ) {
+					    LOG( FATAL ) << "conflicting block size";
+					}
+				} else {
+					block_size = uu.block_size();
+				}
+				if ( padding != -1 ) {
+					if ( padding != uu.padding() ) {
+					    LOG( FATAL ) << "conflicting padding";
+					}
+				} else {
+					padding = uu.padding();
+				}
+				auto lvl = MtSampleLevel{}
+				              .set_raw( uu.raw() )
 							  .set_dim( uu.dim() )
 							  .set_adjusted( uu.adjusted() )
-							  .set_block_size( uu.block_size() )
-							  .set_padding( uu.padding() )
+							  .set_size_mb( uu.adjusted().total() / 1024 / 1024 )
 							  .set_path( file );
-				auto &archs = lvls[ uu.raw() ].archives;
-				iarch[ file ] = { uu.raw(), archs.size() };
-				archs.emplace_back( std::move( arch ) );
+				lvls.emplace( uu.raw(), lvl );
+				iarch[ file ] = uu.raw();
 			}
 		}
 	}
+	
 	for ( auto &file : files ) {
 		auto filename = dir.resolve( file ).resolved();
 		auto fh = fs::open( filename );
@@ -63,22 +78,24 @@ int main( int argc, char **argv )
 			auto sig = FilePath( path.extension().substr( 1 ) );
 			if ( sig.extension() == ".thumb" ) {
 				auto &idx = iarch[ path.baseName() + ".h264" ];
-				auto &thumbs = lvls[ idx.first ].archives[ idx.second ].thumbnails;
+				auto &thumbs = lvls[ idx ].thumbnails;
 				thumbs[ sig.baseName() ] = file;
 			}
 		}
 	}
 
+	auto meta = PackageMeta{}
+		.set_block_size( block_size )
+		.set_padding( padding );
+
 	auto raw = lvls.begin()->first;
 	for ( auto &e : lvls ) {
 		e.second.raw = e.first;
-		std::sort(
-		  e.second.archives.begin(), e.second.archives.end(),
-		  []( const MtArchive &a, const MtArchive &b ) {
-			  return a.block_size > b.block_size;
-		  } );
 		int lvl = log2( raw.x / e.second.raw.x );
-		meta.sample_levels[ lvl ] = std::move( e.second );
+		if ( lvl != meta.sample_levels.size() ) {
+			LOG( FATAL ) << "lvl != meta.sample_levels.size()";
+		}
+		meta.sample_levels.emplace_back( std::move( e.second ) );
 	}
 
 	ofstream os( dir.resolve( "package_meta.json" ).resolved() );

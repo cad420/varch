@@ -30,6 +30,7 @@ if(VARCH_BUILD_UNARCHIVER)
   cuda_add_executable(meta-builder meta-builder.cc)
   vm_target_dependency(meta-builder voxel_unarchive PRIVATE)
   vm_target_dependency(meta-builder cppfs PRIVATE)
+  target_link_libraries(meta-builder glog)
   install(TARGETS meta-builder RUNTIME DESTINATION bin)
 endif()
 
