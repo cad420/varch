@@ -4,6 +4,7 @@
 #include <cudafx/memory.hpp>
 #include <cudafx/transfer.hpp>
 #include <cudafx/array.hpp>
+#include <cudafx/device.hpp>
 #include <VMUtils/with.hpp>
 #include "nvcuvid.h"
 #include "NvCodecUtils.h"
@@ -129,11 +130,11 @@ struct NvDecoderAsyncImpl final : vm::NoCopy, vm::NoMove
 {
 	uint8_t *get_packet( uint32_t len )
 	{
-		thread_local auto _ = std::vector<uint8_t>( 1024 );
-		if ( len > _.size() ) {
-			_.resize( len );
+		thread_local std::vector<uint8_t> pkt_buffer(1024);
+		if ( len > pkt_buffer.size() ) {
+			pkt_buffer.resize( len );
 		}
-		return _.data();
+		return pkt_buffer.data();
 	}
 
 	/* async decode procedure */
@@ -142,8 +143,11 @@ struct NvDecoderAsyncImpl final : vm::NoCopy, vm::NoMove
 
 public:
 	NvDecoderAsyncImpl( DecodeOptions const &opts ) :
+	  ctx( 0, cufx::DeviceId( opts.device_id ) ),
 	  io_queue_size( opts.io_queue_size )
 	{
+		vm::println( "nvdec running on device #{}", opts.device_id );
+		
 		NVDEC_API_CALL( cuvidCtxLockCreate( &ctxlock, ctx ) );
 
 		CUVIDPARSERPARAMS params = {};
@@ -208,7 +212,8 @@ private:
 	unique_ptr<NvBitStreamPacketMapSlot[]> slots;
 
 private:
-	cufx::drv::Context ctx = 0;
+	cufx::drv::Context ctx;
+	std::vector<uint8_t> pkt_buffer;
 	// std::unique_ptr<NvDecoder> dec;
 	CUvideoctxlock ctxlock = nullptr;
 	CUvideoparser parser = nullptr;
@@ -223,7 +228,8 @@ struct NvBitStreamPacketImpl
 	NvDecoderAsyncImpl *decomp;
 };
 
-void NvBitStreamPacket::copy_to( cufx::MemoryView1D<unsigned char> const &dst, unsigned offset, unsigned length ) const
+void NvBitStreamPacket::copy_to( cufx::MemoryView1D<unsigned char> const &dst,
+								 unsigned offset, unsigned length ) const
 {
 	auto dp_dst = dst.ptr();
 	auto dp_dst_end = dp_dst + dst.size();
@@ -381,7 +387,7 @@ int NvDecoderAsyncImpl::handle_picture_display( CUVIDPARSERDISPINFO *info )
 		( *consumer )( packet );
 	}
 
-	CUDA_DRVAPI_CALL( cuCtxPopCurrent( nullptr ) );	 //ck
+	CUDA_DRVAPI_CALL( cuCtxPopCurrent( nullptr ) );  //ck
 
 	return 1;
 }

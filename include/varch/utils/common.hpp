@@ -6,6 +6,7 @@
 #include <VMUtils/modules.hpp>
 #include <cudafx/memory.hpp>
 #include "io.hpp"
+#include "idx.hpp"
 
 VM_BEGIN_MODULE( vol )
 
@@ -32,7 +33,7 @@ VM_EXPORT
 	{
 		Default = 0,
 		Cuda, /* cuda runtime & nvidia driver >= 418 */
-		Cpu	  /* openh264 libs required */
+		Cpu   /* openh264 libs required */
 	};
 
 	struct EncodeOptions
@@ -46,6 +47,7 @@ VM_EXPORT
 	struct DecodeOptions
 	{
 		VM_DEFINE_ATTRIBUTE( ComputeDevice, device ) = ComputeDevice::Default;
+		VM_DEFINE_ATTRIBUTE( int, device_id ) = 0;
 		VM_DEFINE_ATTRIBUTE( unsigned, io_queue_size ) = 4;
 	};
 
@@ -75,36 +77,6 @@ VM_EXPORT
 		}
 	};
 
-	struct Idx
-	{
-		VM_DEFINE_ATTRIBUTE( uint32_t, x );
-		VM_DEFINE_ATTRIBUTE( uint32_t, y );
-		VM_DEFINE_ATTRIBUTE( uint32_t, z );
-
-		uint64_t total() const { return (uint64_t)x * y * z; }
-
-		bool operator<( Idx const &other ) const
-		{
-			return x < other.x ||
-				   x == other.x && ( y < other.y ||
-									 y == other.y && z < other.z );
-		}
-		bool operator==( Idx const &other ) const
-		{
-			return x == other.x && y == other.y && z == other.z;
-		}
-		bool operator!=( Idx const &other ) const
-		{
-			return !( *this == other );
-		}
-
-		friend ostream &operator<<( ostream &os, Idx const &_ )
-		{
-			vm::fprint( os, "{}", make_tuple( _.x, _.y, _.z ) );
-			return os;
-		}
-	};
-
 	struct Packet : vm::Dynamic, vm::NoCopy, vm::NoMove
 	{
 		void copy_to( cufx::MemoryView1D<unsigned char> const &dst ) const
@@ -126,8 +98,8 @@ struct Header
 	VM_DEFINE_ATTRIBUTE( Idx, dim );
 	VM_DEFINE_ATTRIBUTE( Idx, adjusted );
 	VM_DEFINE_ATTRIBUTE( uint64_t, log_block_size );
+	VM_DEFINE_ATTRIBUTE( uint64_t, padded_block_size );
 	VM_DEFINE_ATTRIBUTE( uint64_t, block_size );
-	VM_DEFINE_ATTRIBUTE( uint64_t, block_inner );
 	VM_DEFINE_ATTRIBUTE( uint64_t, padding );
 	VM_DEFINE_ATTRIBUTE( uint64_t, encode_method ) = 0;
 	VM_DEFINE_ATTRIBUTE( uint64_t, frame_size );
@@ -135,15 +107,15 @@ struct Header
 	friend std::ostream &operator<<( std::ostream &os, Header const &header )
 	{
 		vm::fprint( os, "version: {}\nraw: {}\ndim: {}\nadjusted: {}\n"
-						"log_block_size: {}\nblock_size: {}\nblock_inner: {}\n"
+						"log_block_size: {}\npadded_block_size: {}\block_size: {}\n"
 						"padding: {}\nframe_size: {}",
 					header.version,
 					header.raw,
 					header.dim,
 					header.adjusted,
 					header.log_block_size,
+					header.padded_block_size,
 					header.block_size,
-					header.block_inner,
 					header.padding,
 					header.frame_size );
 		return os;

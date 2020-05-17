@@ -18,7 +18,7 @@ using Voxel = char;
 struct ArchiverImpl final : vm::NoCopy, vm::NoMove
 {
 private:
-	size_t log_block_size, block_size, block_inner, padding;
+	size_t log_block_size, padding, block_size, padded_block_size;
 	Idx raw, dim, adjusted;
 
 	const size_t nvoxels_per_block;
@@ -43,19 +43,19 @@ private:
 public:
 	ArchiverImpl( ArchiverOptions const &opts ) :
 	  log_block_size( opts.log_block_size ),
-	  block_size( 1 << opts.log_block_size ),
-	  block_inner( block_size - 2 * opts.padding ),
 	  padding( opts.padding ),
+	  block_size( 1 << opts.log_block_size ),
+	  padded_block_size( 2 * padding + block_size ),
 	  raw{ Idx{}.set_x( opts.x ).set_y( opts.y ).set_z( opts.z ) },
 	  dim( Idx{}
-			 .set_x( RoundUpDivide( raw.x, block_inner ) )
-			 .set_y( RoundUpDivide( raw.y, block_inner ) )
-			 .set_z( RoundUpDivide( raw.z, block_inner ) ) ),
+			 .set_x( RoundUpDivide( raw.x, block_size ) )
+			 .set_y( RoundUpDivide( raw.y, block_size ) )
+			 .set_z( RoundUpDivide( raw.z, block_size ) ) ),
 	  adjusted( Idx{}
 				  .set_x( dim.x * block_size )
 				  .set_y( dim.y * block_size )
 				  .set_z( dim.z * block_size ) ),
-	  nvoxels_per_block( block_size * block_size * block_size ),
+	  nvoxels_per_block( padded_block_size * padded_block_size * padded_block_size ),
 	  ncols( dim.x ),
 	  nrows( dim.y ),
 	  nslices( dim.z ),
@@ -80,8 +80,8 @@ public:
 		}
 
 		vm::println( "raw: {}", raw );
+		vm::println( "padded_block_size: {}", padded_block_size );
 		vm::println( "block_size: {}", block_size );
-		vm::println( "block_inner: {}", block_inner );
 		vm::println( "padding: {}", padding );
 		vm::println( "dim: {}", dim );
 		vm::println( "adjusted: {}", adjusted );
@@ -125,14 +125,14 @@ public:
 
 		/* left bottom corner of region, if padding > 0 this coord might be < 0 */
 		Vec3i region_start(
-		  stride_start.x * block_inner - padding,
-		  stride_start.y * block_inner - padding,
-		  slice * block_inner - padding );
+		  stride_start.x * block_size - padding,
+		  stride_start.y * block_size - padding,
+		  slice * block_size - padding );
 		/* whole region size includes padding, might overflow */
 		Size3 region_size(
-		  stride_size.x * block_inner + padding * 2,
-		  stride_size.y * block_inner + padding * 2,
-		  block_inner + padding * 2 );
+		  stride_size.x * block_size + padding * 2,
+		  stride_size.y * block_size + padding * 2,
+		  block_size + padding * 2 );
 		auto raw_region_size = region_size;
 		auto raw_region_start = region_start;
 
@@ -221,16 +221,16 @@ public:
 			for ( int xb = 0; xb < stride_size.x; xb++ ) {
 				const int dblkid = xb + yb * stride_size.x;
 				const auto dst = write_buffer.data() + dblkid * nvoxels_per_block;
-				const auto src = read_buffer.data() + xb * block_inner + yb * block_inner * raw_region_size.x;
+				const auto src = read_buffer.data() + xb * block_size + yb * block_size * raw_region_size.x;
 
-				for ( size_t dep = 0; dep < block_size; ++dep ) {
-					auto slice_dst = dst + dep * block_size * block_size;
+				for ( size_t dep = 0; dep < padded_block_size; ++dep ) {
+					auto slice_dst = dst + dep * padded_block_size * padded_block_size;
 					auto slice_src = src + dep * raw_region_size.x * raw_region_size.y;
-					for ( size_t row = 0; row < block_size; ++row ) {
+					for ( size_t row = 0; row < padded_block_size; ++row ) {
 						memcpy(
-						  slice_dst + row * block_size,
+						  slice_dst + row * padded_block_size,
 						  slice_src + row * raw_region_size.x,
-						  block_size * sizeof( Voxel ) );
+						  padded_block_size * sizeof( Voxel ) );
 					}
 				}
 				++read_blocks;
@@ -275,6 +275,8 @@ public:
 					}
 				}
 			}
+
+			vm::println( "waiting for video compressor..." );
 			video_compressor.wait();
 		}
 
@@ -288,8 +290,8 @@ public:
 
 		auto header = Header{}
 						.set_log_block_size( log_block_size )
+						.set_padded_block_size( padded_block_size )
 						.set_block_size( block_size )
-						.set_block_inner( block_inner )
 						.set_padding( padding )
 						.set_raw( raw )
 						.set_dim( dim )

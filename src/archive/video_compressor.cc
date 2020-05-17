@@ -38,6 +38,7 @@ struct VideoCompressorImpl
 			try {
 				encoder.reset( new NvEncoderWrapper( opts ) );
 			} catch ( std::exception &e ) {
+				vm::eprintln( "{}", e.what() );
 				goto CPU;
 			}
 		}

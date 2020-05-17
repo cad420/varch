@@ -21,6 +21,7 @@ VM_EXPORT
 		{
 			auto nread = std::min( dlen, len - p );
 			memset( dst, filter, sizeof( char ) * nread );
+			p += nread;
 			return nread;
 		}
 

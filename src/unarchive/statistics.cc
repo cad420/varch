@@ -22,15 +22,25 @@ struct StatisticsCollectorImpl
 	void compute_into( Idx const &idx, Statistics &dst )
 	{
 		const auto I = Vec3i( idx.x, idx.y, idx.z );
-		const auto N = Size3( unarchiver.block_size() );
+		const auto N = Size3( unarchiver.padded_block_size() );
 
 		vector<unsigned char> buffer( N.Prod() );
 
 		unarchiver.unarchive_to( idx, buffer );
 		dst.src.compute_from( buffer );
 
+		for ( auto &pp : dst.percent ) {
+			float num = 0;
+			for ( auto &e : buffer ) {
+				if ( e > pp.threshold ) {
+					num += 1.f;
+				}
+			}
+			pp.percentage = num / N.Prod();
+		}
+
 		if ( raw_input ) {
-			const auto N_i = Vec3i( unarchiver.block_inner() );
+			const auto N_i = Vec3i( unarchiver.block_size() );
 			const auto P = unarchiver.padding();
 
 			vector<unsigned char> raw_buffer( N.Prod() );
@@ -66,6 +76,10 @@ VM_EXPORT
 {
 	StatisticsCollector::StatisticsCollector( Unarchiver & unarchiver, std::string const &raw_file ) :
 	  _( new StatisticsCollectorImpl( unarchiver, raw_file ) )
+	{
+	}
+
+	StatisticsCollector::~StatisticsCollector()
 	{
 	}
 

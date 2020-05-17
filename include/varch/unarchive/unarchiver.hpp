@@ -59,7 +59,7 @@ VM_EXPORT
 		unsigned inner_offset;
 	};
 
-	struct Unarchiver final : vm::NoCopy, vm::NoMove
+	struct Unarchiver : vm::NoCopy, vm::NoMove
 	{
 		Unarchiver( Reader &reader, DecodeOptions const &opts = {} );
 		~Unarchiver();
@@ -67,9 +67,9 @@ VM_EXPORT
 	public:
 		std::size_t unarchive_to( Idx const &idx,
 								  cufx::MemoryView1D<unsigned char> const &dst );
-		// // block_idx ->
-		// void batch_unarchive( std::vector<Idx> const &blocks,
-		// 					  std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer );
+		// block_idx ->
+		void unarchive( std::vector<Idx> const &blocks,
+						std::function<void( Idx const &idx, VoxelStreamPacket const & )> const &consumer );
 		// std::size_t unarchive_to( Idx const &block,
 		// 							cufx::MemoryView1D<unsigned char> const &buffer )
 		// {
@@ -87,8 +87,8 @@ VM_EXPORT
 		auto dim() const { return data.header.dim; }
 		auto adjusted() const { return data.header.adjusted; }
 		auto log_block_size() const { return data.header.log_block_size; }
+		auto padded_block_size() const { return data.header.padded_block_size; }
 		auto block_size() const { return data.header.block_size; }
-		auto block_inner() const { return data.header.block_inner; }
 		auto padding() const { return data.header.padding; }
 		auto frame_size() const { return data.header.frame_size; }
 

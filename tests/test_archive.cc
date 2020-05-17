@@ -18,7 +18,7 @@ void compress_256( string const &raw_input_file, string const &h264_output_file 
 				  .set_x( 256 )
 				  .set_y( 256 )
 				  .set_z( 256 )
-				  .set_log_block_size( 6 )	// 64
+				  .set_log_block_size( 6 )  // 64
 				  .set_padding( 0 )
 				  .set_suggest_mem_gb( 4 )
 				  .set_input( raw_input_file )
@@ -36,7 +36,7 @@ void compress_256( string const &raw_input_file, string const &h264_output_file 
 
 bool compare_block( Unarchiver &unarchiver, string const &raw_input_file, Idx const &idx )
 {
-	const auto N = unarchiver.block_size();
+	const auto N = unarchiver.padded_block_size();
 	const auto N_3 = N * N * N;
 	const auto raw = unarchiver.raw();
 
@@ -95,8 +95,8 @@ void decode_256( string const &raw_input_file, string const &h264_output_file )
 	EXPECT_EQ( unarchiver.dim(), ( Idx{ 4, 4, 4 } ) );
 	EXPECT_EQ( unarchiver.adjusted(), ( Idx{ 256, 256, 256 } ) );
 	EXPECT_EQ( unarchiver.log_block_size(), 6 );
+	EXPECT_EQ( unarchiver.padded_block_size(), 64 );
 	EXPECT_EQ( unarchiver.block_size(), 64 );
-	EXPECT_EQ( unarchiver.block_inner(), 64 );
 	EXPECT_EQ( unarchiver.padding(), 0 );
 
 	for ( uint32_t i = 0; i != 4; ++i ) {

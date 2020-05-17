@@ -1,29 +1,27 @@
 #include <fstream>
-#include "cxxopts.hpp"
+#include <VMUtils/cmdline.hpp>
 #include <VMUtils/fmt.hpp>
 #include <varch/unarchive/unarchiver.hpp>
 #include <varch/utils/io.hpp>
+#include "tool_utils.hpp"
 
 using namespace std;
+using namespace cppfs;
 
 int main( int argc, char **argv )
 {
-	cxxopts::Options options( "voxel-info", "Print voxel info" );
-	options.add_options()(
-	  "i,input", "input compressed file", cxxopts::value<string>() )(
-	  "h,help", "print this help message" );
-	//   ("l,list", "list indices" );
+	cmdline::parser a;
+	a.add<string>( "in", 'i', "input compressed filename", true );
 
-	auto opts = options.parse( argc, argv );
-	if ( opts.count( "h" ) || !opts.count( "i" ) ) {
-		vm::println( "{}", options.help() );
-		return 0;
-	}
+	a.parse_check( argc, argv );
 
 	try {
-		ifstream in( opts[ "i" ].as<string>(), std::ios::ate | std::ios::binary );
-		auto len = in.tellg();
-		vol::StreamReader reader( in, 0, len );
+		auto in = FilePath( a.get<string>( "in" ) );
+		ensure_file( in.resolved() );
+
+		ifstream is( in.resolved(), std::ios::ate | std::ios::binary );
+		auto len = is.tellg();
+		vol::StreamReader reader( is, 0, len );
 		vol::Unarchiver e( reader );
 
 		vm::println( "{>16}: {}", "Size", e.raw() );
