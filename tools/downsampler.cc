@@ -57,7 +57,7 @@ int main( int argc, char **argv )
 				for ( int k = 0; k < dz; ++k ) {
 					for ( int j = y; j < y + s && j < dim.y; ++j ) {
 						for ( int i = x; i < x + s && s < dim.x; ++i ) {
-							v = std::max( buf[ k * dim.x + dim.y + j * dim.x + i ], v );
+							v = std::max( buf[ k * dim.x * dim.y + j * dim.x + i ], v );
 						}
 					}
 				}
