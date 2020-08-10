@@ -27,7 +27,7 @@ private:
 	int nblocks_per_stride, nrow_iters;
 	size_t buffer_size;
 
-	RawReaderIO input;
+	RawReader input;
 	ofstream output;
 
 	vol::UnboundedStreamWriter body_writer;

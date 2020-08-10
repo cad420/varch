@@ -42,7 +42,7 @@ bool compare_block( Unarchiver &unarchiver, string const &raw_input_file, Idx co
 
 	vector<unsigned char> buffer( N_3 );
 
-	RawReaderIO raw_input( raw_input_file, Size3( raw.x, raw.y, raw.z ), sizeof( char ) );
+	RawReader raw_input( raw_input_file, Size3( raw.x, raw.y, raw.z ), sizeof( char ) );
 	vector<unsigned char> src_buffer( N_3 );
 
 	unarchiver.unarchive_to( idx, buffer );

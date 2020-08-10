@@ -32,11 +32,11 @@ target_link_libraries(voxel_archive vmcore)
 if(MSVC)
   if(CMAKE_CL_64)
     target_link_libraries(voxel_archive
-      ${PROJECT_SOURCE_DIR}/lib/x64/nvencodeapi.lib
+      ${PROJECT_SOURCE_DIR}/lib/x64/nvcuvid.lib
     )
   else()
     target_link_libraries(voxel_archive
-      ${PROJECT_SOURCE_DIR}/lib/Win32/nvencodeapi.lib
+      ${PROJECT_SOURCE_DIR}/lib/Win32/nvcuvid.lib
     )
   endif()
 else()

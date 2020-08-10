@@ -15,7 +15,7 @@ struct StatisticsCollectorImpl
 	{
 		if ( raw_file != "" ) {
 			auto raw = unarchiver.raw();
-			raw_input.reset( new RawReaderIO( raw_file, Size3( raw.x, raw.y, raw.z ), sizeof( char ) ) );
+			raw_input.reset( new RawReader( raw_file, Size3( raw.x, raw.y, raw.z ), sizeof( char ) ) );
 		}
 	}
 
@@ -69,7 +69,7 @@ struct StatisticsCollectorImpl
 
 public:
 	Unarchiver &unarchiver;
-	std::shared_ptr<RawReaderIO> raw_input;
+	std::shared_ptr<RawReader> raw_input;
 };
 
 VM_EXPORT

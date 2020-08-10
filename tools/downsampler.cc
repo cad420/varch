@@ -37,7 +37,7 @@ int main( int argc, char **argv )
 	  vm::RoundUpDivide( dim.y, s ),
 	  vm::RoundUpDivide( dim.z, s ) );
 
-	vm::RawReaderIO input( in.resolved(), vm::Size3( dim ), sizeof( char ) );
+	vm::RawReader input( in.resolved(), vm::Size3( dim ), sizeof( char ) );
 	auto out_path = out.resolve( FilePath( vm::fmt( "{}_x{}.raw", in.baseName(), s ) ) ).resolved();
 	ofstream os( out_path, ios::binary );
 	vector<unsigned char> buf( dim.x * dim.y * s );
